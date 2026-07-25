@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Happy Birthday Sis!</title>
+    <!-- Load Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for animations and specific game elements */
+        body {
+            background-color: #fce7f3; /* Light pink background */
+            font-family: 'Comic Sans MS', 'Chalkboard SE', 'Marker Felt', sans-serif;
+            overflow: hidden; /* Prevent scrolling while playing */
+            margin: 0;
+            padding: 0;
+        }
+        /* Container for the game area to center it and set max size */
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        /* Final Surprise Message Styling */
+        #birthday-message {
+            display: none; /* Hide it initially */
+            position: absolute;
+            inset: 0;
+            background: rgba(253, 230, 238, 1); /* Solid cute pink background */
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 30; /* Ensures it stays on top of everything else */
+            text-align: center;
+            padding: 2rem;
+            animation: popIn 0.8s ease-out;
+        }
+        /* Styling for the floating balloons in the background */
+        .balloon {
+            position: absolute;
+            bottom: -100px;
+            font-size: 3rem; /* Using emoji for balloons */
+            animation: floatUp linear infinite;
+            cursor: pointer; /* Change cursor to indicate they can be popped */
+            user-select: none;
+            transition: transform 0.1s;
+        }
+        .balloon:active {
+            transform: scale(0.9); /* Slight squash effect when clicked */
+        }
+        /* UI Panel at the top (Score, Timer, etc.) */
+        #ui-panel {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            background: white;
+            padding: 10px 20px;
+            border-radius: 50px;
+            box-shadow: 0 4px 15px rgba(236, 72, 153, 0.2);
+            z-index: 5;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #d81b60; /* Vibrant pink text */
+            border: 4px solid #fbcfe8; /* Light pink border */
+            white-space: nowrap;
+            letter-spacing: 1px;
+        }
+        @media (min-width: 768px) {
+            #ui-panel {
+                gap: 30px;
+                padding: 12px 40px;
+                font-size: 1.8rem;
+            }
+        }
+        /* Checkpoint Screen Styling */
+        #checkpoint-screen {
+            display: none;
+            position: absolute;
+            inset: 0;
+            background: rgba(253, 230, 238, 0.98);
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 22; /* Between game and slideshow */
+            text-align: center;
+            padding: 2rem;
+            animation: popIn 0.5s ease-out;
+        }
+        .goat-checkbox-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 20px 0;
+            background: white;
+            padding: 12px 15px;
+            border-radius: 15px;
+            border: 3px solid #60a5fa; /* Blue for Argentina/Messi vibes */
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        @media (min-width: 768px) {
+            .goat-checkbox-container {
+                gap: 15px;
+                margin: 30px 0;
+                padding: 20px 30px;
+            }
+        }
+        .goat-checkbox-container:hover {
+            transform: scale(1.02);
+        }
+        input[type="checkbox"]#goat-check {
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            accent-color: #3b82f6;
+        }
+        
+        /* Start Screen Styling */
+        #start-screen {
+            position: absolute;
+            inset: 0;
+            background: rgba(253, 230, 238, 0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 20;
+            text-align: center;
+            padding: 2rem;
+        }
+        /* Fun button styling */
+        .game-btn {
+            background-color: #ec4899;
+            color: white;
+            padding: 12px 30px;
+            font-size: 1.5rem;
+            border-radius: 50px;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 6px 0 #be185d;
+            transition: all 0.1s;
+            margin-top: 20px;
+            font-weight: bold;
+        }
+        .game-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #be185d;
+        }
+        .photo-gallery {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px 0;
+            flex-wrap: wrap; /* Allow wrapping on small screens */
+        }
+        .photo-frame {
+            width: 150px;
+            height: 150px;
+            border-radius: 15px;
+            border: 4px solid white;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+            overflow: hidden;
+            background-color: #fce7f3;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            /* A subtle rotation for a fun polaroid look */
+            transform: rotate(-3deg);
+            transition: transform 0.3s;
+        }
+        .photo-frame:nth-child(even) {
+            transform: rotate(3deg);
+        }
+        .photo-frame:hover {
+            transform: rotate(0) scale(1.05);
+            z-index: 2;
+        }
+        .photo-frame img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* Ensures the image fills the frame nicely */
+        }
+        
+        /* Fallback text if image doesn't load */
+        .photo-placeholder-text {
+            color: #ec4899;
+            font-size: 0.9rem;
+            text-align: center;
+            padding: 10px;
+        }
+        #slideshow-container {
+            display: none;
+            position: absolute;
+            inset: 0;
+            background: rgba(253, 230, 238, 1);
+            z-index: 25;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+        }
+        
+        .slide-img-container {
+            max-width: 90%;
+            max-height: 60vh;
+            border: 8px solid white;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            transform: rotate(-2deg);
+            background: #fff;
+            padding: 10px;
+        }
+        
+        #slide-img {
+            max-width: 100%;
+            max-height: 55vh;
+            display: block;
+            opacity: 0;
+        }
+        
+        #slide-caption {
+            margin-top: 1.5rem;
+            font-size: 1.4rem;
+            color: #be185d;
+            font-weight: bold;
+            text-align: center;
+            opacity: 0;
+            text-shadow: 2px 2px 4px rgba(255,255,255,0.8);
+            padding: 0 15px;
+        }
+        
+        @media (min-width: 768px) {
+            #slide-caption {
+                margin-top: 2rem;
+                font-size: 2rem;
+            }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        
+        @keyframes fadeOut {
+            from { opacity: 1; transform: scale(1); }
+            to { opacity: 0; transform: scale(1.05); }
+        }
+        
+        @keyframes floatUp {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-120vh); }
+        }
+        @keyframes popIn {
+            0% { opacity: 0; transform: scale(0.8); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%; /* Make them little circles */
+            pointer-events: none;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <!-- Top UI Panel showing score and time left -->
+        <div id="ui-panel" style="display: none;">
+            <div>Score: <span id="score-val">0</span>/21</div>
+            <div>Time: <span id="time-val">30</span>s</div>
+        </div>
+        <!-- Area where balloons will be generated -->
+        <div id="balloon-area" class="absolute inset-0 overflow-hidden pointer-events-none"></div>
+        <!-- The Final Surprise Message Box -->
+        <div id="birthday-message">
+            <h1 class="text-4xl md:text-5xl font-bold text-pink-600 mb-2">Happy Birthday!</h1>
+            <h2 class="text-lg md:text-2xl text-purple-600 mb-4 px-4">To the best sister ever!</h2>
+            
+            <p class="text-sm md:text-lg text-gray-700 mb-4 px-4">
+                I hope you have a magical day filled with joy, laughter, and lots of cake!<br>
+                You're not just my sister, you're my favorite person to annoy. Love you!<br><br>
+                P.S. Yes, I admit it... Messi is the GOAT.
+            </p>
+            <div class="flex justify-center gap-4 text-2xl md:text-3xl">
+                
+            </div>
+            <button onclick="resetGame()" class="game-btn text-sm mt-4">Play Again</button>
+        </div>
+        <div id="slideshow-container">
+            <div class="slide-img-container">
+                <img id="slide-img" src="" alt="Memory">
+            </div>
+            <div id="slide-caption"></div>
+        </div>
+        <!-- Initial Start Screen -->
+        <div id="start-screen">
+            <h1 class="text-4xl md:text-7xl font-extrabold text-pink-500 mb-4 drop-shadow-md">Surprise!</h1>
+            <p class="text-lg md:text-2xl text-gray-700 mb-8 max-w-md px-4">Pop 21 balloons before time runs out to unlock your birthday surprise!</p>
+            <button onclick="startGame()" class="game-btn">Start Popping!</button>
+        </div>
+        <!-- The Checkpoint Screen -->
+        <div id="checkpoint-screen">
+            <h1 class="text-3xl md:text-5xl font-extrabold text-blue-500 mb-4 px-4">Wait! One more thing...</h1>
+            <p class="text-lg md:text-2xl text-gray-700 max-w-md px-4">You popped the balloons, but to unlock the real surprise, you have to admit the truth.</p>
+            
+            <label class="goat-checkbox-container" for="goat-check">
+                <input type="checkbox" id="goat-check" onchange="checkGoatStatus()">
+                <span class="text-base md:text-2xl font-bold text-gray-800">I admit that Messi is the GOAT.</span>
+            </label>
+            <button id="unlock-btn" onclick="startSlideshowFromCheckpoint()" class="game-btn bg-gray-400 text-white cursor-not-allowed shadow-none text-sm md:text-lg" disabled>Unlock Surprise</button>
+        </div>
+    </div>
+    <script>
+        // Game State Variables
+        let score = 0;
+        const targetScore = 21; // Number of balloons needed to win
+        let timeLeft = 30; // Time limit in seconds
+        let gameInterval;
+        let balloonSpawnInterval;
+        let isGameRunning = false;
+        let masterGainNode = null; // Controls the song's volume for fading out
+
+        // DOM Elements
+        const scoreEl = document.getElementById('score-val');
+        const timeEl = document.getElementById('time-val');
+        const uiPanel = document.getElementById('ui-panel');
+        const startScreen = document.getElementById('start-screen');
+        const checkpointScreen = document.getElementById('checkpoint-screen');
+        const unlockBtn = document.getElementById('unlock-btn');
+        const goatCheck = document.getElementById('goat-check');
+        const birthdayMessage = document.getElementById('birthday-message');
+        const balloonArea = document.getElementById('balloon-area');
+        const slideshowContainer = document.getElementById('slideshow-container');
+        const slideImg = document.getElementById('slide-img');
+        const slideCaption = document.getElementById('slide-caption');
+        
+        // Updated with your provided photos!
+        const photos = [
+           { url: "WhatsApp Image 2026-07-26 at 12.33.53 AM (4).jpeg", caption: "Ved and I look more cooler than you" },
+            { url: "WhatsApp Image 2026-07-26 at 12.33.53 AM.jpeg", caption: "Memories from 20 year ago" },
+            { url: "WhatsApp Image 2026-07-26 at 12.33.53 AM (3).jpeg", caption: "Look at you, how funny you look" },
+            { url: "WhatsApp Image 2026-07-26 at 12.33.53 AM (2).jpeg", caption: "Cannon is more important than photo" },
+            { url: "WhatsApp Image 2026-07-26 at 12.33.53 AM (1).jpeg", caption: "So proud of you on graduation day!" },
+            { url: "WhatsApp Image 2026-07-26 at 12.32.47 AM.jpeg", caption: "A brother who is forced to pose for photos by his evil devil mind sister" },
+            { url: "WhatsApp Image 2026-07-26 at 12.32.05 AM (1).jpeg", caption: "I know you're scared of camel, don't fake a smile" },
+            { url: "WhatsApp Image 2026-07-26 at 12.32.05 AM.jpeg", caption: "Kaka Bhatji" },
+            { url: "WhatsApp Image 2026-07-26 at 12.33.23 AM.jpeg", caption: "The whole gang together!" },
+            { url: "WhatsApp Image 2026-07-26 at 12.30.08 AM.jpeg", caption: "I am so handsome," },
+            { url: "WhatsApp Image 2026-07-26 at 12.29.15 AM.jpeg", caption: "An evil sister trying to devour her brother" },
+            { url: "WhatsApp Image 2026-07-26 at 12.28.10 AM.jpeg", caption: "still scared of camels right?, just admit it" }
+        ];
+
+        let currentSlide = 0;
+        // Arrays of balloon colors (using emojis for simplicity and fun)
+        const balloons = ['🎈', '🎈', '🎈', '🎈', '🎈'];
+        // Optional: Array of hex colors if we want to use div shapes instead of emojis later
+        const colors = ['#f43f5e', '#ec4899', '#d946ef', '#8b5cf6', '#3b82f6', '#10b981', '#f59e0b'];
+
+        /**
+         * Starts the game sequence
+         */
+        function startGame() {
+            // Hide start screen, show UI
+            startScreen.style.display = 'none';
+            checkpointScreen.style.display = 'none';
+            uiPanel.style.display = 'flex';
+            birthdayMessage.style.display = 'none';
+            
+            // Reset variables
+            score = 0;
+            timeLeft = 30;
+            isGameRunning = true;
+            updateUI();
+            
+            // Enable pointer events on the balloon area so they can be clicked
+            balloonArea.classList.remove('pointer-events-none');
+
+            // Start timers
+            gameInterval = setInterval(updateTimer, 1000);
+            
+            // Spawn balloons frequently
+            balloonSpawnInterval = setInterval(createBalloon, 600);
+            
+            // Create a few initially so the screen isn't empty
+            for(let i=0; i<5; i++) {
+                setTimeout(createBalloon, i * 100);
+            }
+        }
+
+        /**
+         * Updates the score and time on the screen
+         */
+        function updateUI() {
+            scoreEl.innerText = score;
+            timeEl.innerText = timeLeft;
+            
+            // Change color if time is running low
+            if (timeLeft <= 5) {
+                timeEl.style.color = '#ef4444'; // Red
+            } else {
+                timeEl.style.color = 'inherit';
+            }
+        }
+
+        /**
+         * Decrements the timer and checks for loss condition
+         */
+        function updateTimer() {
+            if (!isGameRunning) return;
+            
+            timeLeft--;
+            updateUI();
+
+            if (timeLeft <= 0) {
+                endGame(false); // Time ran out
+            }
+        }
+
+        /**
+         * Creates a single balloon element and adds it to the DOM
+         */
+        function createBalloon() {
+            if (!isGameRunning) return;
+
+            const balloon = document.createElement('div');
+            balloon.classList.add('balloon');
+            
+            // Randomly select a balloon emoji
+            const randomType = balloons[Math.floor(Math.random() * balloons.length)];
+            balloon.innerText = randomType;
+
+            // Random horizontal position (keep it within bounds)
+            const leftPos = Math.random() * 80 + 10; // 10% to 90% of screen width
+            balloon.style.left = `${leftPos}vw`;
+
+            // Randomize animation duration for different speeds (between 3s and 6s)
+            const duration = Math.random() * 3 + 3;
+            balloon.style.animationDuration = `${duration}s`;
+
+            // Handle popping (clicking)
+            // Use both mousedown and touchstart for better mobile responsiveness
+            const popHandler = (e) => {
+                e.preventDefault(); // Prevent double firing on touch devices
+                if (!isGameRunning) return;
+                
+                popBalloon(balloon, e.clientX || (e.touches && e.touches[0].clientX), e.clientY || (e.touches && e.touches[0].clientY));
+            };
+            
+            balloon.addEventListener('mousedown', popHandler);
+            balloon.addEventListener('touchstart', popHandler);
+
+            // Remove balloon when animation ends to clean up DOM
+            balloon.addEventListener('animationend', () => {
+                if (balloon.parentNode) {
+                    balloon.parentNode.removeChild(balloon);
+                }
+            });
+
+            balloonArea.appendChild(balloon);
+        }
+
+        /**
+         * Logic for when a balloon is clicked
+         */
+        function popBalloon(balloonEl, x, y) {
+            // Ensure we have coordinates (fallback if missing)
+            const rect = balloonEl.getBoundingClientRect();
+            const popX = x || rect.left + rect.width / 2;
+            const popY = y || rect.top + rect.height / 2;
+
+            // Create simple confetti effect at the pop location
+            createConfetti(popX, popY);
+
+            // Remove the balloon
+            balloonEl.remove();
+
+            // Increase score
+            score++;
+            updateUI();
+
+            // Pop sound effect (synthesized to avoid external assets)
+            playPopSound();
+
+            // Check for win condition
+            if (score >= targetScore) {
+                endGame(true);
+            }
+        }
+
+        /**
+         * Creates a simple particle effect at the given coordinates
+         */
+        function createConfetti(x, y) {
+            for (let i = 0; i < 10; i++) {
+                const particle = document.createElement('div');
+                particle.classList.add('confetti');
+                
+                // Random color for particle
+                particle.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                
+                // Position at click location
+                particle.style.left = `${x}px`;
+                particle.style.top = `${y}px`;
+                
+                document.body.appendChild(particle);
+
+                // Animate particle falling and fading
+                const angle = Math.random() * Math.PI * 2;
+                const velocity = Math.random() * 5 + 2;
+                const dx = Math.cos(angle) * velocity;
+                let dy = Math.sin(angle) * velocity - 2; // Initial slight upward arc
+                let opacity = 1;
+                let frame = 0;
+                
+                const animateParticle = () => {
+                    frame++;
+                    dy += 0.2; // Gravity
+                    
+                    const currentLeft = parseFloat(particle.style.left);
+                    const currentTop = parseFloat(particle.style.top);
+                    
+                    particle.style.left = `${currentLeft + dx}px`;
+                    particle.style.top = `${currentTop + dy}px`;
+                    
+                    // Fade out
+                    if (frame > 20) {
+                        opacity -= 0.05;
+                        particle.style.opacity = opacity;
+                    } else {
+                        particle.style.opacity = 1;
+                    }
+
+                    if (opacity > 0) {
+                        requestAnimationFrame(animateParticle);
+                    } else {
+                        particle.remove();
+                    }
+                };
+                
+                requestAnimationFrame(animateParticle);
+            }
+        }
+
+        /**
+         * Synthesizes a simple "pop" sound using Web Audio API
+         */
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playPopSound() {
+            if (!audioCtx) return;
+            
+            // Resume context if suspended (browser policy)
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            // Short, high-pitched sine wave for a "pop"
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(800, audioCtx.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 0.1);
+
+            // Envelope to fade out quickly
+            gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + 0.1);
+        }
+
+        /**
+         * Handles the end of the game (win or lose)
+         */
+        function endGame(won) {
+            isGameRunning = false;
+            clearInterval(gameInterval);
+            clearInterval(balloonSpawnInterval);
+            
+            // Stop new clicks
+            balloonArea.classList.add('pointer-events-none');
+
+            // Clear remaining balloons
+            balloonArea.innerHTML = '';
+            uiPanel.style.display = 'none';
+
+            if (won) {
+                // Show the checkpoint screen first!
+                checkpointScreen.style.display = 'flex';
+                // Reset the checkbox state just in case
+                goatCheck.checked = false;
+                checkGoatStatus(); 
+            } else {
+                // Failed - let them try again
+                startScreen.style.display = 'flex';
+                startScreen.querySelector('h1').innerText = "Oops! Time's Up!";
+                startScreen.querySelector('p').innerText = `You popped ${score} balloons. You need ${targetScore} to see the surprise!`;
+                startScreen.querySelector('button').innerText = "Try Again";
+            }
+        }
+
+        /**
+         * Resets the game from the success screen
+         */
+        function resetGame() {
+            startScreen.style.display = 'flex';
+            startScreen.querySelector('h1').innerText = "Surprise!";
+            startScreen.querySelector('p').innerText = `Pop ${targetScore} balloons before time runs out to unlock your birthday surprise!`;
+            startScreen.querySelector('button').innerText = "Start Popping!";
+            
+            birthdayMessage.style.display = 'none';
+            checkpointScreen.style.display = 'none';
+            slideshowContainer.style.display = 'none'; // Ensure slideshow hides on reset
+            stopMusic(); // Stop song if they click "Play Again"
+        }
+
+        /**
+         * Checks if the user checked the box and enables/disables the button
+         */
+        function checkGoatStatus() {
+            if (goatCheck.checked) {
+                unlockBtn.disabled = false;
+                unlockBtn.classList.remove('bg-gray-400', 'cursor-not-allowed', 'shadow-none');
+                unlockBtn.classList.add('bg-blue-500'); // Turn it blue!
+                unlockBtn.innerText = "Unlock Surprise";
+            } else {
+                unlockBtn.disabled = true;
+                unlockBtn.classList.add('bg-gray-400', 'cursor-not-allowed', 'shadow-none');
+                unlockBtn.classList.remove('bg-blue-500');
+                unlockBtn.innerText = "Unlock Surprise";
+            }
+        }
+
+        /**
+         * Triggered when they click the unlock button
+         */
+        function startSlideshowFromCheckpoint() {
+            checkpointScreen.style.display = 'none';
+            playHappyBirthdaySong();
+            startSlideshow();
+        }
+
+        /**
+         * Creates a large confetti explosion when they win
+         */
+        function triggerBigConfetti() {
+            const centerX = window.innerWidth / 2;
+            const centerY = window.innerHeight / 2;
+            
+            // Fire multiple bursts
+            for(let j=0; j<3; j++) {
+                setTimeout(() => {
+                    for (let i = 0; i < 50; i++) {
+                        // Offset the burst centers slightly
+                        const offsetX = centerX + (Math.random() - 0.5) * 200;
+                        const offsetY = centerY + (Math.random() - 0.5) * 200;
+                        createConfetti(offsetX, offsetY);
+                    }
+                }, j * 400); // Stagger bursts
+            }
+        }
+
+        function startSlideshow() {
+            slideshowContainer.style.display = 'flex';
+            currentSlide = 0;
+            showNextSlide();
+        }
+
+        function showNextSlide() {
+            if (currentSlide >= photos.length) {
+                // End of slideshow: hide slider, show final message, trigger confetti!
+                slideshowContainer.style.display = 'none';
+                birthdayMessage.style.display = 'flex'; /* Use flex to center the content */
+                triggerBigConfetti();
+                stopMusic(); // Fade out the music when the final screen shows!
+                return;
+            }
+
+            const photo = photos[currentSlide];
+
+            // Preload the next image to prevent flickering/popping
+            const tempImg = new Image();
+            
+            // Once the new image is fully loaded in the background, execute the transition
+            tempImg.onload = function() {
+                slideImg.src = photo.url;
+                slideCaption.innerText = photo.caption;
+
+                // Reset animations by triggering a DOM reflow
+                slideImg.style.animation = 'none';
+                slideCaption.style.animation = 'none';
+                void slideImg.offsetWidth; 
+
+                // Apply Fade In
+                slideImg.style.animation = 'fadeIn 1s ease-in forwards';
+                slideCaption.style.animation = 'fadeIn 1s ease-in forwards';
+
+                // Wait 3.5 seconds, then Fade Out
+                setTimeout(() => {
+                    slideImg.style.animation = 'fadeOut 1s ease-out forwards';
+                    slideCaption.style.animation = 'fadeOut 1s ease-out forwards';
+
+                    // Wait 1 second for fade out to finish, then go to next slide
+                    setTimeout(() => {
+                        currentSlide++;
+                        showNextSlide();
+                    }, 1000);
+                }, 3500); 
+            };
+
+            // Trigger the image load
+            tempImg.src = photo.url;
+        }
+
+        function stopMusic() {
+            if (masterGainNode && audioCtx) {
+                // Smoothly fade out the volume over 1.5 seconds
+                masterGainNode.gain.setTargetAtTime(0, audioCtx.currentTime, 0.5);
+            }
+        }
+
+        function playHappyBirthdaySong() {
+            if (!audioCtx) return;
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+
+            // Create a master volume control so we can fade it out at the end
+            masterGainNode = audioCtx.createGain();
+            masterGainNode.connect(audioCtx.destination);
+            masterGainNode.gain.value = 1;
+
+            // Note frequencies for standard melody
+            const C4 = 261.63, D4 = 293.66, E4 = 329.63, F4 = 349.23;
+            const G4 = 392.00, A4 = 440.00, Bb4 = 466.16, C5 = 523.25;
+
+            // Note durations in seconds (Tempo adjustment)
+            const eigth = 0.3;
+            const quarter = 0.6;
+            const half = 1.2;
+
+            const melody = [
+                { f: C4, d: eigth }, { f: C4, d: eigth },
+                { f: D4, d: quarter }, { f: C4, d: quarter },
+                { f: F4, d: quarter }, { f: E4, d: half },
+
+                { f: C4, d: eigth }, { f: C4, d: eigth },
+                { f: D4, d: quarter }, { f: C4, d: quarter },
+                { f: G4, d: quarter }, { f: F4, d: half },
+
+                { f: C4, d: eigth }, { f: C4, d: eigth },
+                { f: C5, d: quarter }, { f: A4, d: quarter },
+                { f: F4, d: quarter }, { f: E4, d: quarter }, { f: D4, d: half },
+
+                { f: Bb4, d: eigth }, { f: Bb4, d: eigth },
+                { f: A4, d: quarter }, { f: F4, d: quarter },
+                { f: G4, d: quarter }, { f: F4, d: half }
+            ];
+
+            let startTime = audioCtx.currentTime + 0.1;
+
+            // Loop the melody 6 times so it plays through the entire slideshow
+            for (let i = 0; i < 6; i++) {
+                melody.forEach(note => {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    
+                    osc.connect(gain);
+                    gain.connect(masterGainNode); // Connect to the master volume node
+                    
+                    osc.type = 'triangle'; // Gives a smooth, music-box-like tone
+                    osc.frequency.value = note.f;
+                    
+                    // Audio Envelope (Attack, Sustain, Release) to make distinct notes
+                    gain.gain.setValueAtTime(0, startTime);
+                    gain.gain.linearRampToValueAtTime(0.3, startTime + 0.05);
+                    gain.gain.exponentialRampToValueAtTime(0.01, startTime + note.d - 0.05);
+                    
+                    osc.start(startTime);
+                    osc.stop(startTime + note.d);
+                    
+                    startTime += note.d; 
+                });
+                startTime += 0.5; // Short pause before looping the song again
+            }
+        }
+    </script>
+</body>
+</html>
